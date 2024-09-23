@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Form</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body >
+    <div class="flex flex-col items-center justify-center min-h-screen bg-gray-200">
+    <div class="form bg-white p-10 rounded-lg shadow-lg">
+    <form id="user-form">
+        <div class="mb-5">
+            <label for="name" class="block mb-2 font-semibold">Name</label>
+            <input required type="text" id="name" name="name" class="w-full p-2 border rounded-md">
+        </div>
+        <div class="mb-5">
+            <label for="email" class="block mb-2 font-semibold">Email</label>
+            <input required type="email" id="email" name="email" class="w-full p-2 border rounded-md">
+        </div>
+        <div class="mb-5">
+            <label for="password" class="block mb-2 font-semibold">Password</label>
+            <input required type="password" id="password" name="password" class="w-full p-2 border rounded-md">
+        </div>
+        <div class="mb-5">
+            <label for="dob" class="block mb-2 font-semibold">Date of Birth</label>
+            <input required type="date" id="dob" name="dob" class="w-full p-2 border rounded-md">
+        </div>
+        <div class="mb-5">
+            <input  type="checkbox" id="acceptTerms" name="acceptTerms" class="mr-2">
+            <label  for="acceptTerms" class="font-semibold">Accept Terms & Conditions</label>
+        </div>
+        <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded-md">Submit</button>
+     </form></div>
+    <div class="relative bg-white px-6 mt-5 pt-10 pb-8 shadow-xl ring-1 sm:mx-auto sm:rounded-lg sm:px-10">
+    <div class="mx-auto ">
+        <h2 class="text-3xl text-center font-bold leading-tight">Entries</h2>
+        <div class="divide-y divide-gray-300/50" id="user-entries"></div>
+    </div></div></div>
+    <script src="index.js"></script>
+</body>
+</html>
