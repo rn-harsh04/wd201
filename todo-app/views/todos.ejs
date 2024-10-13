@@ -1,0 +1,24 @@
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Due Date</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% if (allTodos.length > 0) { %>
+            <% allTodos.forEach(todo => { %>
+                <tr>
+                    <td><%= todo.title %></td>
+                    <td><%= new Date(todo.dueDate).toLocaleDateString() %></td>
+                    <td><%= todo.completed ? 'Completed' : 'Pending' %></td>
+                </tr>
+            <% }); %>
+        <% } else { %>
+            <tr>
+                <td colspan="3">No todos available. Add a new todo to get started!</td>
+            </tr>
+        <% } %>
+    </tbody>
+</table>
