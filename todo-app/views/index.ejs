@@ -5,14 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo App</title>
     <link rel="stylesheet" href="./css/styles.css">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-    <%- include('header.ejs')%>
-    
-    <div>
-        <h2>List of Your Todos</h2>
-        <%- include('todos.ejs', { allTodos }) %>
+    <div class="grid grid-cols-6">
+        <div class="col-start-3 col-span-2">
+            <%- include('header.ejs') %>
+            <form>
+                <!-- form for adding todos -->
+            </form>
+            <%- include('todos.ejs', { overdueTodos, dueTodayTodos, dueLaterTodos }) %>
+        </div>
     </div>
-    <%- include('footer.ejs')%>
+    <%- include('footer.ejs') %>
 </body>
 </html>
