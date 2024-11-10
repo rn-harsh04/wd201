@@ -8,6 +8,7 @@ const { Todo } = require("./models");
 const bodyParser = require("body-parser");
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: false }));
 app.set("view engine","ejs");
 const dayjs = require("dayjs");
 app.use(express.static(path.join(__dirname,'public')));
@@ -57,7 +58,7 @@ app.post("/todos", async (request, response) => {
       dueDate: request.body.dueDate,
       completed: false,
     });
-    return response.json(todo);
+    return response.redirect("/");
   } catch (error) {
     console.log(error);
     return response.status(422).json(error);
@@ -77,13 +78,12 @@ app.put("/todos/:id/markAsCompleted", async (request, response) => {
   }
 });
 app.delete("/todos/:id", async (request, response) => {
+  console.log("Deleting a Todo by ID:", request.params.id);
   try {
-    const result = await Todo.destroy({
-      where: { id: request.params.id }
-    });
-    return response.status(result ? 204 : 404).send();
+    await Todo.remove(request.params.id);  // Corrected here
+    return response.json({ success: true });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return response.status(422).json(error);
   }
 });

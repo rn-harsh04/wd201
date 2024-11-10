@@ -20,6 +20,13 @@ module.exports = (sequelize, DataTypes) => {
     static getTodos(){
       return this.findAll();
     }
+    static async remove(id){
+      return this.destroy({
+        where:{
+          id,
+        }
+      });
+    }
   }
   Todo.init(
     {
