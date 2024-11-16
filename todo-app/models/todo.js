@@ -1,33 +1,38 @@
 /* eslint-disable no-unused-vars */
 "use strict";
 const { Model } = require("sequelize");
+
 module.exports = (sequelize, DataTypes) => {
   class Todo extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
-      // define association here
+      // Define associations here if needed
     }
+
     static addTodo({ title, dueDate }) {
       return this.create({ title: title, dueDate: dueDate, completed: false });
     }
+
     markAsCompleted() {
       return this.update({ completed: true });
     }
-    static getTodos(){
+
+    static getTodos() {
       return this.findAll();
     }
-    static async remove(id){
+
+    static async remove(id) {
+      const todo = await this.findByPk(id);
+      if (!todo) {
+        throw new Error("Todo not found");
+      }
       return this.destroy({
-        where:{
+        where: {
           id,
-        }
+        },
       });
     }
   }
+
   Todo.init(
     {
       title: DataTypes.STRING,
@@ -39,5 +44,6 @@ module.exports = (sequelize, DataTypes) => {
       modelName: "Todo",
     },
   );
+
   return Todo;
 };

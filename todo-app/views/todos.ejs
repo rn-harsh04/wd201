@@ -4,7 +4,7 @@
         <% overdueTodos.forEach(function(todo) { %>
             <li class="Todo-item">
                 <div class="flex items-center w-fit my-2 px-2 py-1 rounded bg-red-50">
-                    <input id="todo-checkbox-<%= todo.id %>" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300" <%= todo.completed ? 'checked' : '' %> onclick="updateTodo(<%= todo.id %>)">
+                    <input id="todo-checkbox-<%= todo.id %>" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300" <%= todo.completed ? 'checked' : '' %> onclick="updateTodo(<%= todo.id %>, !<%= todo.completed %>)">
                     <label for="todo-checkbox-<%= todo.id %>" class="ml-2 text-sm text-gray-600 cursor-pointer"><%= todo.title %></label>
                     <a href="#" class="ml-2 text-red-600 hover:text-red-800" onclick="deleteTodo(<%= todo.id %>); return false;">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
@@ -21,7 +21,8 @@
         <% dueTodayTodos.forEach(function(todo) { %>
             <li class="Todo-item">
                 <div class="flex items-center w-fit my-2 px-2 py-1 rounded bg-green-50">
-                    <input id="todo-checkbox-<%= todo.id %>" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300" <%= todo.completed ? 'checked' : '' %> onclick="updateTodo(<%= todo.id %>)">
+                    <input id="todo-checkbox-<%= todo.id %>" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray ```html
+                    <input id="todo-checkbox-<%= todo.id %>" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300" <%= todo.completed ? 'checked' : '' %> onclick="updateTodo(<%= todo.id %>, !<%= todo.completed %>)">
                     <label for="todo-checkbox-<%= todo.id %>" class="ml-2 text-sm text-gray-600 cursor-pointer"><%= todo.title %></label>
                     <a href="#" class="ml-2 text-red-600 hover:text-red-800" onclick="deleteTodo(<%= todo.id %>); return false;">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
@@ -38,7 +39,7 @@
         <% dueLaterTodos.forEach(function(todo) { %>
             <li class="Todo-item">
                 <div class="flex items-center w-fit my-2 px-2 py-1 rounded bg-yellow-50">
-                    <input id="todo-checkbox-<%= todo.id %>" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300" <%= todo.completed ? 'checked' : '' %> onclick="updateTodo(<%= todo.id %>)">
+                    <input id="todo-checkbox-<%= todo.id %>" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300" <%= todo.completed ? 'checked' : '' %> onclick="updateTodo(<%= todo.id %>, !<%= todo.completed %>)">
                     <label for="todo-checkbox-<%= todo.id %>" class="ml-2 text-sm text-gray-600 cursor-pointer"><%= todo.title %></label>
                     <a href="#" class="ml-2 text-red-600 hover:text-red-800" onclick="deleteTodo(<%= todo.id %>); return false;">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
