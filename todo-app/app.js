@@ -14,7 +14,7 @@ app.set("view engine", "ejs");
 // eslint-disable-next-line no-undef
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cookieParser("shh! Some secret string"));
-app.use(csrf("this_should_be_32_character_long", ["POST", "PUT", "DELETE"])); // CSRF setup
+app.use(csrf("this_should_be_32_character_long", ["POST", "PUT", "DELETE"]));
 
 // Middleware to handle CSRF token errors
 app.use((err, req, res, next) => {
@@ -30,29 +30,48 @@ app.get("/", async (request, response) => {
     const allTodos = await Todo.getTodos();
     const today = dayjs().format("YYYY-MM-DD");
 
-    const overdueTodos = allTodos.filter((todo) =>
-      dayjs(todo.dueDate).isBefore(today),
+    // Filter todos based on their completion status
+    const overdueTodos = allTodos.filter(
+      (todo) => dayjs(todo.dueDate).isBefore(today) && !todo.completed,
     );
-    const dueTodayTodos = allTodos.filter((todo) =>
-      dayjs(todo.dueDate).isSame(today),
+    const dueTodayTodos = allTodos.filter(
+      (todo) => dayjs(todo.dueDate).isSame(today) && !todo.completed,
     );
-    const dueLaterTodos = allTodos.filter((todo) =>
-      dayjs(todo.dueDate).isAfter(today),
+    const dueLaterTodos = allTodos.filter(
+      (todo) => dayjs(todo.dueDate).isAfter(today) && !todo.completed,
     );
+    const completedTodos = allTodos.filter((todo) => todo.completed);
 
     if (request.accepts("html")) {
-      response.render("index", {
+      return response.render("index", {
         overdueTodos,
         dueTodayTodos,
         dueLaterTodos,
-        csrfToken: request.csrfToken(), // Correctly setting CSRF token
+        completedTodos,
+        csrfToken: request.csrfToken(),
       });
     } else {
-      response.json({ overdueTodos, dueTodayTodos, dueLaterTodos });
+      return response.json({
+        overdueTodos,
+        dueTodayTodos,
+        dueLaterTodos,
+        completedTodos,
+      });
     }
   } catch (error) {
     console.error(error);
-    response.status(500).send("Internal Server Error");
+    return response.status(500).send("Internal Server Error");
+  }
+});
+
+// GET route to fetch all todos
+app.get("/todos", async (request, response) => {
+  try {
+    const allTodos = await Todo.getTodos();
+    return response.json(allTodos);
+  } catch (error) {
+    console.error(error);
+    return response.status(500).send("Internal Server Error");
   }
 });
 
@@ -60,7 +79,6 @@ app.get("/", async (request, response) => {
 app.post("/todos", async (request, response) => {
   const { title, dueDate } = request.body;
 
-  // Client-side validation
   if (!title || !dueDate) {
     return response
       .status(422)
@@ -76,7 +94,7 @@ app.post("/todos", async (request, response) => {
     return response.redirect("/");
   } catch (error) {
     console.error(error);
-    return response.status(422).json(error);
+    return response.status(422).json({ error: error.message });
   }
 });
 
@@ -87,23 +105,45 @@ app.put("/todos/:id", async (request, response) => {
     if (!todo) {
       return response.status(404).json({ error: "Todo not found" });
     }
-    const { completed } = request.body; // Expecting completed key in the body
-    await todo.update({ completed }); // Update the completed status
-    return response.json(todo); // Return the updated todo
+    const { completed } = request.body;
+    await todo.update({ completed });
+    return response.json(todo);
   } catch (error) {
     console.error(error);
-    return response.status(422).json(error);
+    return response.status(422).json({ error: error.message });
   }
 });
 
 // DELETE route to remove a todo
 app.delete("/todos/:id", async (request, response) => {
   try {
+    const todo = await Todo.findByPk(request.params.id);
+    if (!todo) {
+      return response.status(404).json({ error: "Todo not found" });
+    }
     await Todo.remove(request.params.id);
     return response.json({ success: true });
   } catch (error) {
     console.error(error);
-    return response.status(422).json(error);
+    return response.status(422).json({ error: error.message });
+  }
+});
+
+// Route to get completed todos
+app.get("/todos/completed", async (request, response) => {
+  try {
+    const completedTodos = await Todo.findAll({
+      where: { completed: true },
+    });
+
+    if (request.accepts("json")) {
+      return response.json(completedTodos);
+    }
+
+    return response.render("completed", { completedTodos });
+  } catch (error) {
+    console.error(error);
+    return response.status(500).send("Internal Server Error");
   }
 });
 

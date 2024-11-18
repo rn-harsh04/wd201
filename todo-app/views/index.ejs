@@ -52,7 +52,7 @@
                     })
                 });
                 if (response.ok) {
-                    window.location.reload();
+                    window.location.reload(); // Reload to reflect changes
                 }
             } catch (error) {
                 console.error("Error updating todo:", error);
@@ -109,7 +109,7 @@
                     </button>
                 </div>
             </form>
-            <%- include('todos.ejs', { overdueTodos, dueTodayTodos, dueLaterTodos }) %>
+            <%- include('todos.ejs', { overdueTodos, dueTodayTodos, dueLaterTodos, completedTodos }) %>
             <%- include('footer.ejs') %>
         </div>
     </div>
