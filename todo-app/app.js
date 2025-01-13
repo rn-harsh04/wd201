@@ -4,8 +4,12 @@ const path = require("path");
 const csrf = require("tiny-csrf");
 const dayjs = require("dayjs");
 const cookieParser = require("cookie-parser");
-const { Todo } = require("./models");
+const { Todo,User } = require("./models");
 const bodyParser = require("body-parser");
+const passport=require('passport');
+const connectionEnsureLogin=require('connect-ensure-login');
+const session=require('express-session');
+const LocalStrategy=require('passport-local');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -15,7 +19,39 @@ app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cookieParser("shh! Some secret string"));
 app.use(csrf("this_should_be_32_character_long", ["POST", "PUT", "DELETE"]));
-
+//passport sessions for user authorization
+app.use(session({
+  secret: "my-super-secret-key-21728172615261562",
+  cookie:{
+    maxAge: 24 * 60 * 60 * 1000
+  }
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy({
+  usernameField: 'email',
+  passwordField: 'password'
+},(username,password,done)=>{
+  User.findOne({ where:{email:username,password:password}})
+  .then((user)=>{
+    return done(null,user)
+  }).catch((error)=>{
+    return(error)
+  })
+}))
+passport.serializeUser((user,done)=>{
+  console.log("Serializing user in session",user.id);
+  done(null,user.id);
+});
+passport.deserializeUser((id,done)=>{
+  User.findByPk(id)
+  .then(user=>{
+    done(null,user)
+  })
+  .catch(error=>{
+    done(error,null)
+  })
+});
 // Middleware to handle CSRF token errors
 app.use((err, req, res, next) => {
   if (err.code === "EBADCSRFTOKEN") {
@@ -26,6 +62,12 @@ app.use((err, req, res, next) => {
 
 // GET route for the home page
 app.get("/", async (request, response) => {
+  return response.render("index", {
+    title: "Todo Application",
+    csrfToken: request.csrfToken(),
+  });
+});
+app.get("/todos",connectionEnsureLogin.ensureLoggedIn(), async (request, response) => {
   try {
     const allTodos = await Todo.getTodos();
     const today = dayjs().format("YYYY-MM-DD");
@@ -43,7 +85,7 @@ app.get("/", async (request, response) => {
     const completedTodos = allTodos.filter((todo) => todo.completed);
 
     if (request.accepts("html")) {
-      return response.render("index", {
+      return response.render("todos", {
         overdueTodos,
         dueTodayTodos,
         dueLaterTodos,
@@ -62,8 +104,31 @@ app.get("/", async (request, response) => {
     console.error(error);
     return response.status(500).send("Internal Server Error");
   }
+})
+// Route to Sign up page
+app.get("/signup",(request,response)=>{
+  response.render("signup",{title:"signup",csrfToken:request.csrfToken()})
+})
+app.post("/users", async (request, response) => {
+  try {
+      // eslint-disable-next-line no-unused-vars
+      const user = await User.create({
+          firstName: request.body.firstName,
+          lastName: request.body.lastName,
+          email: request.body.email,
+          password: request.body.password,
+      });
+      request.login(user,(err)=>{
+        if(err){
+          console.log(err)
+        }
+        response.redirect("/todos");
+      })
+  } catch (error) {
+      console.error(error);
+      response.status(500).send("Internal Server Error");
+  }
 });
-
 // GET route to fetch all todos
 app.get("/todos", async (request, response) => {
   try {
@@ -146,6 +211,7 @@ app.get("/todos/completed", async (request, response) => {
     return response.status(500).send("Internal Server Error");
   }
 });
+
 
 // Export the app for testing
 module.exports = app;
