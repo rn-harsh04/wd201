@@ -10,7 +10,8 @@ const passport=require('passport');
 const connectionEnsureLogin=require('connect-ensure-login');
 const session=require('express-session');
 const LocalStrategy=require('passport-local');
-
+const bcrypt=require('bcrypt')
+const saltRounds=10;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -19,6 +20,7 @@ app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cookieParser("shh! Some secret string"));
 app.use(csrf("this_should_be_32_character_long", ["POST", "PUT", "DELETE"]));
+
 //passport sessions for user authorization
 app.use(session({
   secret: "my-super-secret-key-21728172615261562",
@@ -32,9 +34,14 @@ passport.use(new LocalStrategy({
   usernameField: 'email',
   passwordField: 'password'
 },(username,password,done)=>{
-  User.findOne({ where:{email:username,password:password}})
-  .then((user)=>{
-    return done(null,user)
+  User.findOne({ where:{email:username}})
+  .then(async(user)=>{
+    const result=await bcrypt.compare(password,user.password)
+    if(result){
+      return done(null,user)
+    }else{
+      return done("Invalid Password")
+    }
   }).catch((error)=>{
     return(error)
   })
@@ -109,14 +116,17 @@ app.get("/todos",connectionEnsureLogin.ensureLoggedIn(), async (request, respons
 app.get("/signup",(request,response)=>{
   response.render("signup",{title:"signup",csrfToken:request.csrfToken()})
 })
+//signup page
 app.post("/users", async (request, response) => {
+  const hashedPwd= await bcrypt.hash(request.body.password,saltRounds)
+  console.log(hashedPwd)
   try {
       // eslint-disable-next-line no-unused-vars
       const user = await User.create({
           firstName: request.body.firstName,
           lastName: request.body.lastName,
           email: request.body.email,
-          password: request.body.password,
+          password: hashedPwd,
       });
       request.login(user,(err)=>{
         if(err){
@@ -129,6 +139,22 @@ app.post("/users", async (request, response) => {
       response.status(500).send("Internal Server Error");
   }
 });
+// login page
+app.get("/login",(request,response)=>{
+  response.render("login",{title:"Login",csrfToken:request.csrfToken()})
+});
+app.post("/session",passport.authenticate('local',{failureRedirect:"/login"}),(request,response)=>{
+  console.log(request.user)
+  response.redirect("/todos");
+});
+//signout
+app.get("/signout",(request,response,next)=>{
+  request.logout((err)=>{
+    if(err){return next(err)}
+    response.redirect("/")
+  })
+
+})
 // GET route to fetch all todos
 app.get("/todos", async (request, response) => {
   try {
@@ -141,7 +167,7 @@ app.get("/todos", async (request, response) => {
 });
 
 // POST route to add a new todo
-app.post("/todos", async (request, response) => {
+app.post("/todos",connectionEnsureLogin.ensureLoggedIn(), async (request, response) => {
   const { title, dueDate } = request.body;
 
   if (!title || !dueDate) {
@@ -164,7 +190,7 @@ app.post("/todos", async (request, response) => {
 });
 
 // PUT route to mark a todo as complete or incomplete
-app.put("/todos/:id", async (request, response) => {
+app.put("/todos/:id",connectionEnsureLogin.ensureLoggedIn(), async (request, response) => {
   try {
     const todo = await Todo.findByPk(request.params.id);
     if (!todo) {
@@ -180,7 +206,7 @@ app.put("/todos/:id", async (request, response) => {
 });
 
 // DELETE route to remove a todo
-app.delete("/todos/:id", async (request, response) => {
+app.delete("/todos/:id",connectionEnsureLogin.ensureLoggedIn(), async (request, response) => {
   try {
     const todo = await Todo.findByPk(request.params.id);
     if (!todo) {
