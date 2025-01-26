@@ -35,8 +35,9 @@ Ensure you have the following installed:
 ### Installation
 1. Clone the repository:
    git clone https://github.com/rn-harsh04/wd201.git
+   
    cd wd201 
-2. Install the dependencies:  
+3. Install the dependencies:  
    npm install  
 
 ### Running the HTTP Server
