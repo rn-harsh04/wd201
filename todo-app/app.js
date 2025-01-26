@@ -11,11 +11,14 @@ const connectionEnsureLogin = require("connect-ensure-login");
 const session = require("express-session");
 const LocalStrategy = require("passport-local");
 const bcrypt = require("bcrypt");
+const flash = require("connect-flash");
 const saltRounds = 10;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.set("view engine", "ejs");
+// eslint-disable-next-line no-undef
+app.set("views", path.join(__dirname, "views"));
 // eslint-disable-next-line no-undef
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cookieParser("shh! Some secret string"));
@@ -45,7 +48,7 @@ passport.use(
           if (result) {
             return done(null, user);
           } else {
-            return done("Invalid Password");
+            return done(null, false, { message: "Invalid Password" });
           }
         })
         .catch((error) => {
@@ -73,6 +76,12 @@ app.use((err, req, res, next) => {
     return res.status(403).json({ error: "Invalid CSRF token" });
   }
   next(err);
+});
+// connect flash message
+app.use(flash());
+app.use(function (request, response, next) {
+  response.locals.messages = request.flash();
+  next();
 });
 
 // GET route for the home page
@@ -151,6 +160,15 @@ app.post("/users", async (request, response) => {
       response.redirect("/todos");
     });
   } catch (error) {
+    if (error.name === "SequelizeValidationError") {
+      // Add validation errors to flash messages
+      error.errors.forEach((e) => request.flash("error", e.message));
+      return response.redirect("/signup");
+    }
+    if (error.name === "SequelizeUniqueConstraintError") {
+      request.flash("error", "Email is already in use");
+      return response.redirect("/signup");
+    }
     console.error(error);
     response.status(500).send("Internal Server Error");
   }
@@ -161,7 +179,10 @@ app.get("/login", (request, response) => {
 });
 app.post(
   "/session",
-  passport.authenticate("local", { failureRedirect: "/login" }),
+  passport.authenticate("local", {
+    failureRedirect: "/login",
+    failureFlash: true,
+  }),
   (request, response) => {
     console.log(request.user);
     response.redirect("/todos");
@@ -210,6 +231,10 @@ app.post(
       });
       return response.redirect("/todos");
     } catch (error) {
+      if (error.name === "SequelizeValidationError") {
+        error.errors.forEach((e) => request.flash("error", e.message));
+        return response.redirect("/todos");
+      }
       console.error(error);
       return response.status(422).json({ error: error.message });
     }
