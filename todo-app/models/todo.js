@@ -5,22 +5,31 @@ const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class Todo extends Model {
     static associate(models) {
-      Todo.belongsTo(models.User,{
-        foreignKey:'userId'
-      })
+      Todo.belongsTo(models.User, {
+        foreignKey: "userId",
+      });
       // Define associations here if needed
     }
 
-    static addTodo({ title, dueDate }) {
-      return this.create({ title: title, dueDate: dueDate, completed: false });
+    static addTodo({ title, dueDate, userId }) {
+      return this.create({
+        title: title,
+        dueDate: dueDate,
+        completed: false,
+        userId,
+      });
     }
 
     markAsCompleted() {
       return this.update({ completed: true });
     }
 
-    static getTodos() {
-      return this.findAll();
+    static getTodos(userId) {
+      return this.findAll({
+        where: {
+          userId,
+        },
+      });
     }
 
     static async remove(id) {

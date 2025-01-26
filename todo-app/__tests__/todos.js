@@ -11,7 +11,16 @@ function extractCsrfToken(res) {
   const $ = cheerio.load(res.text);
   return $("[name=_csrf]").val();
 }
-
+//Function for User login
+const login = async (agent, username, password) => {
+  let res = await agent.get("/login");
+  let csrfToken = extractCsrfToken(res);
+  res = await agent.post("/session").send({
+    email: username,
+    password: password,
+    _csrf: csrfToken,
+  });
+};
 describe("Todo test suite", () => {
   beforeAll(async () => {
     await db.sequelize.sync({ force: true }); // Sync DB
@@ -23,9 +32,30 @@ describe("Todo test suite", () => {
     await db.sequelize.close(); // Close DB connection
     server.close(); // Stop server
   });
-
+  test("Sign up", async () => {
+    let res = await agent.get("/signup");
+    let csrfToken = extractCsrfToken(res);
+    res = await agent.post("/users").send({
+      firstName: "Test",
+      lastName: "testing",
+      email: "user.testing@test.com",
+      password: "12345678",
+      _csrf: csrfToken,
+    });
+    expect(res.statusCode).toBe(302);
+  });
+  test("Sign out", async () => {
+    let res = await agent.get("/todos");
+    expect(res.statusCode).toBe(200);
+    res = await agent.get("/signout");
+    expect(res.statusCode).toBe(302);
+    res = await agent.get("/todos");
+    expect(res.statusCode).toBe(302);
+  });
   test("responds with json at /todos", async () => {
-    const res = await agent.get("/");
+    const agent = request.agent(server);
+    await login(agent, "user.testing@test.com", "12345678");
+    const res = await agent.get("/todos");
     const csrfToken = extractCsrfToken(res);
     const response = await agent.post("/todos").send({
       title: "Buy milk",
@@ -37,7 +67,9 @@ describe("Todo test suite", () => {
   });
 
   test("Mark a todo as complete", async () => {
-    let res = await agent.get("/");
+    const agent = request.agent(server);
+    await login(agent, "user.testing@test.com", "12345678");
+    let res = await agent.get("/todos");
     let csrfToken = extractCsrfToken(res);
 
     // Create a new todo
@@ -50,12 +82,12 @@ describe("Todo test suite", () => {
 
     // Fetch todos
     const groupedTodosResponse = await agent
-      .get("/")
+      .get("/todos")
       .set("Accept", "application/json");
     const { dueTodayTodos } = JSON.parse(groupedTodosResponse.text);
     const latestTodo = dueTodayTodos[dueTodayTodos.length - 1];
 
-    res = await agent.get("/");
+    res = await agent.get("/todos");
     csrfToken = extractCsrfToken(res);
 
     const markCompleteResponse = await agent
@@ -70,7 +102,7 @@ describe("Todo test suite", () => {
 
     // Verify that the todo is no longer in dueTodayTodos
     const updatedGroupedTodosResponse = await agent
-      .get("/")
+      .get("/todos")
       .set("Accept", "application/json");
     const updatedDueTodayTodos = JSON.parse(
       updatedGroupedTodosResponse.text,
@@ -83,7 +115,9 @@ describe("Todo test suite", () => {
   });
 
   test("Delete a todo by the ID", async () => {
-    let res = await agent.get("/");
+    const agent = request.agent(server);
+    await login(agent, "user.testing@test.com", "12345678");
+    let res = await agent.get("/todos");
     let csrfToken = extractCsrfToken(res);
 
     // Create a new todo
@@ -96,12 +130,12 @@ describe("Todo test suite", () => {
 
     // Fetch todos
     const groupedTodosResponse = await agent
-      .get("/")
+      .get("/todos")
       .set("Accept", "application/json");
     const { dueTodayTodos } = JSON.parse(groupedTodosResponse.text);
     const latestTodo = dueTodayTodos[dueTodayTodos.length - 1];
 
-    res = await agent.get("/");
+    res = await agent.get("/todos");
     csrfToken = extractCsrfToken(res);
 
     const deleteResponse = await agent.delete(`/todos/${latestTodo.id}`).send({
@@ -113,7 +147,7 @@ describe("Todo test suite", () => {
 
     // Verify that the todo is no longer in the list
     const afterDeleteResponse = await agent
-      .get("/")
+      .get("/todos")
       .set("Accept", "application/json");
     const afterDeleteTodos = JSON.parse(afterDeleteResponse.text).dueTodayTodos;
 
