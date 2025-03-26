@@ -71,3 +71,5 @@ Mark a todo as complete:
 ### Testing
 To run the tests, use the following command:  
    npm test  
+### RUN THE APP 
+The application is deployed on Render: https://harshpandey-todoapp.onrender.com but the Instance is free and only avaliable for one month
